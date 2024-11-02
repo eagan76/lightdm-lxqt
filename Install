@@ -1,0 +1,37 @@
+# Create a setup script
+cat << 'EOF' > setup_lightdm_artix.sh
+#!/bin/bash
+
+# Install LightDM, the GTK greeter, LXQt, and Xorg
+sudo pacman -Syu --noconfirm lightdm lightdm-gtk-greeter lxqt xorg-server
+
+# Check if LightDM service file exists; if not, create it
+if [ ! -f /etc/init.d/lightdm ]; then
+    echo "Creating LightDM service file..."
+    sudo bash -c 'cat << EOF_SERVICE > /etc/init.d/lightdm
+#!/sbin/openrc-run
+
+command="/usr/bin/lightdm"
+pidfile="/run/lightdm.pid"
+description="LightDM Display Manager"
+
+depend() {
+    need dbus
+    use elogind
+}
+EOF_SERVICE'
+    # Make the service file executable
+    sudo chmod +x /etc/init.d/lightdm
+fi
+
+# Add LightDM to the default runlevel
+sudo rc-update add lightdm default
+
+# Start LightDM immediately
+sudo rc-service lightdm start
+
+echo "LightDM and LXQt setup complete. Reboot to apply changes."
+EOF
+
+# Make the script executable and run it
+chmod +x setup_lightdm_artix.sh && ./setup_lightdm_artix.sh
